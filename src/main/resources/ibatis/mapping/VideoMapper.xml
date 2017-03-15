@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sleepwalker.dingdong.video.dao.VideoDao">
+  <resultMap id="BaseResultMap" type="com.sleepwalker.dingdong.video.model.Video">
+    <id column="ID" jdbcType="BIGINT" property="id" />
+    <result column="NAME" jdbcType="VARCHAR" property="name" />
+    <result column="SEASON" jdbcType="TINYINT" property="season" />
+    <result column="EPISODE" jdbcType="TINYINT" property="episode" />
+    <result column="STATUS" jdbcType="TINYINT" property="status" />
+    <result column="WEEK_OF_DAY" jdbcType="TINYINT" property="weekOfDay" />
+    <result column="RETURN_TIME" jdbcType="TIMESTAMP" property="returnTime" />
+    <result column="GMT_CREATED" jdbcType="TIMESTAMP" property="gmtCreated" />
+    <result column="GMT_MODIFIED" jdbcType="TIMESTAMP" property="gmtModified" />
+  </resultMap>
+  
+
+  <insert id="insert" parameterType="com.sleepwalker.dingdong.video.model.Video">
+    insert into video
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="id != null">
+        ID,
+      </if>
+      <if test="name != null">
+        NAME,
+      </if>
+      <if test="season != null">
+        SEASON,
+      </if>
+      <if test="episode != null">
+        EPISODE,
+      </if>
+      <if test="status != null">
+        STATUS,
+      </if>
+      <if test="weekOfDay != null">
+        WEEK_OF_DAY,
+      </if>
+      <if test="returnTime != null">
+        RETURN_TIME,
+      </if>
+      <if test="gmtCreated != null">
+        GMT_CREATED,
+      </if>
+      <if test="gmtModified != null">
+        GMT_MODIFIED,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="id != null">
+        #{id,jdbcType=BIGINT},
+      </if>
+      <if test="name != null">
+        #{name,jdbcType=VARCHAR},
+      </if>
+      <if test="season != null">
+        #{season,jdbcType=TINYINT},
+      </if>
+      <if test="episode != null">
+        #{episode,jdbcType=TINYINT},
+      </if>
+      <if test="status != null">
+        #{status,jdbcType=TINYINT},
+      </if>
+      <if test="weekOfDay != null">
+        #{weekOfDay,jdbcType=TINYINT},
+      </if>
+      <if test="returnTime != null">
+        #{returnTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="gmtCreated != null">
+        #{gmtCreated,jdbcType=TIMESTAMP},
+      </if>
+      <if test="gmtModified != null">
+        #{gmtModified,jdbcType=TIMESTAMP},
+      </if>
+    </trim>
+  </insert>
+  
+  <update id="updateById" parameterType="com.sleepwalker.dingdong.video.model.Video">
+    update video
+    <set>
+      <if test="name != null">
+        NAME = #{name,jdbcType=VARCHAR},
+      </if>
+      <if test="season != null">
+        SEASON = #{season,jdbcType=TINYINT},
+      </if>
+      <if test="episode != null">
+        EPISODE = #{episode,jdbcType=TINYINT},
+      </if>
+      <if test="status != null">
+        STATUS = #{status,jdbcType=TINYINT},
+      </if>
+      <if test="weekOfDay != null">
+        WEEK_OF_DAY = #{weekOfDay,jdbcType=TINYINT},
+      </if>
+      <if test="returnTime != null">
+        RETURN_TIME = #{returnTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="gmtCreated != null">
+        GMT_CREATED = #{gmtCreated,jdbcType=TIMESTAMP},
+      </if>
+      <if test="gmtModified != null">
+        GMT_MODIFIED = #{gmtModified,jdbcType=TIMESTAMP},
+      </if>
+    </set>
+    where ID = #{id,jdbcType=BIGINT}
+  </update>
+  
+  <delete id="deleteById" parameterType="java.lang.Long">
+    delete from video
+    where ID = #{id,jdbcType=BIGINT}
+  </delete>
+  
+  <select id="selectById" parameterType="java.lang.Long" resultMap="BaseResultMap">
+    select *
+    from video
+    where ID = #{id,jdbcType=BIGINT}
+  </select>
+  
+  
+</mapper>

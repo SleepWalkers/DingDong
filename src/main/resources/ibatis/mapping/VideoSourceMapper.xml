@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sleepwalker.dingdong.video.dao.VideoSourceDao">
+  <resultMap id="BaseResultMap" type="com.sleepwalker.dingdong.video.VideoSourceSource">
+    <id column="ID" jdbcType="BIGINT" property="id" />
+    <result column="NAME" jdbcType="VARCHAR" property="name" />
+    <result column="VIDEO_ID" jdbcType="BIGINT" property="videoId" />
+    <result column="SIZE" jdbcType="DOUBLE" property="size" />
+    <result column="FORMAT" jdbcType="VARCHAR" property="format" />    
+    <result column="URL" jdbcType="LONGVARCHAR" property="url" />
+    <result column="GMT_CREATED" jdbcType="TIMESTAMP" property="gmtCreated" />
+    <result column="GMT_MODIFIED" jdbcType="TIMESTAMP" property="gmtModified" />
+  </resultMap>
+
+  <insert id="insert" parameterType="com.sleepwalker.dingdong.video.VideoSource">
+    insert into video
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="id != null">
+        ID,
+      </if>
+      <if test="name != null">
+        NAME,
+      </if>
+      <if test="videoId != null">
+        VIDEO_ID,
+      </if>
+      <if test="size != null">
+        SIZE,
+      </if>
+      <if test="format != null">
+        FORMAT,
+      </if>
+      <if test="gmtCreated != null">
+        GMT_CREATED,
+      </if>
+      <if test="gmtModified != null">
+        GMT_MODIFIED,
+      </if>
+      <if test="url != null">
+        URL,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="id != null">
+        #{id,jdbcType=BIGINT},
+      </if>
+      <if test="name != null">
+        #{name,jdbcType=VARCHAR},
+      </if>
+      <if test="videoId != null">
+        #{videoId},
+      </if>
+      <if test="size != null">
+        #{size,jdbcType=DOUBLE},
+      </if>
+      <if test="format != null">
+        #{format,jdbcType=VARCHAR},
+      </if>
+      <if test="gmtCreated != null">
+        #{gmtCreated,jdbcType=TIMESTAMP},
+      </if>
+      <if test="gmtModified != null">
+        #{gmtModified,jdbcType=TIMESTAMP},
+      </if>
+      <if test="url != null">
+        #{url,jdbcType=LONGVARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateById" parameterType="com.sleepwalker.dingdong.video.VideoSource">
+    update video
+    <set>
+      <if test="name != null">
+        NAME = #{name,jdbcType=VARCHAR},
+      </if>
+      <if test="videoId != null">
+        VIDEO_ID = #{videoId},
+      </if>
+      <if test="size != null">
+        SIZE = #{size,jdbcType=DOUBLE},
+      </if>
+      <if test="format != null">
+        FORMAT = #{format,jdbcType=VARCHAR},
+      </if>
+      <if test="gmtCreated != null">
+        GMT_CREATED = #{gmtCreated,jdbcType=TIMESTAMP},
+      </if>
+      <if test="gmtModified != null">
+        GMT_MODIFIED = #{gmtModified,jdbcType=TIMESTAMP},
+      </if>
+      <if test="url != null">
+        URL = #{url,jdbcType=LONGVARCHAR},
+      </if>
+    </set>
+    where ID = #{id,jdbcType=BIGINT}
+  </update>
+  
+  <delete id="deleteById" parameterType="java.lang.Long">
+    delete from video
+    where ID = #{id,jdbcType=BIGINT}
+  </delete>
+  
+  <select id="selectById" parameterType="java.lang.Long" resultMap="BaseResultMap">
+    select *
+    from video
+    where ID = #{id,jdbcType=BIGINT}
+  </select>
+  
+  <select id="selectByType" parameterType="java.lang.Long" resultMap="BaseResultMap">
+    select * 
+    from video where type = #{type}
+	order by ID desc
+	<if test="start >= 0">
+		<if test="limit > 0 ">
+			limit ${start},${limit}
+		</if>
+	</if>
+  </select>
+  
+</mapper>

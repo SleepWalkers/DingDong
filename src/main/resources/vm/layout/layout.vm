@@ -1,0 +1,9 @@
+###parse('layout/header.vm')  
+##<body style="background:url(images/header_bg.png) repeat-x;">  
+##  <div id="wrapper">  
+##       $screen_content  
+##        #parse('layout/footer.vm')  
+##    </div>  
+##</body>  
+##</html> 
+$screen_content

@@ -1,0 +1,243 @@
+##时间戳
+#macro(updateVersion )
+#set($vTmp = "20140116")$vTmp#end
+
+#macro(calcuBenefit $totalAmount,$userRate,$superiorRate)
+#set($allBenefit = $math.mul($!{totalAmount},$!{userRate}))
+#set($superiorBenefit = $math.mul($!{totalAmount},$!{superiorRate}))
+$number.format("#0.00",$math.sub($allBenefit,$superiorBenefit))
+#end
+##将地区代码转换成对应的中文
+#macro(transAreaCode $areaCode)
+	#if($!{areaCode})
+	#if($areaCode == "340000")
+		安徽
+	#elseif($areaCode == "110000")
+		北京
+    #elseif($areaCode == "350000")
+		福建
+	#elseif($areaCode == "620000")
+		甘肃
+	#elseif($areaCode == "440000")
+		广东
+    #elseif($areaCode == "450000")
+		广西
+	#elseif($areaCode == "520000")
+		贵州
+	#elseif($areaCode == "460000")
+		海南
+	#elseif($areaCode == "130000")
+		河北
+	#elseif($areaCode == "410000")
+		河南
+	#elseif($areaCode == "230000")
+		黑龙江
+	#elseif($areaCode == "420000")
+		湖北
+	#elseif($areaCode == "430000")
+		湖南
+	#elseif($areaCode == "220000")
+		吉林
+	#elseif($areaCode == "320000")
+		江苏
+	#elseif($areaCode == "360000")
+		江西
+	#elseif($areaCode == "210000")
+		辽宁
+	#elseif($areaCode == "150000")
+		内蒙古
+	#elseif($areaCode == "640000")
+		宁夏
+	#elseif($areaCode == "630000")
+		青海
+	#elseif($areaCode == "370000")
+		山东
+	#elseif($areaCode == "140000")
+		山西
+	#elseif($areaCode == "610000")
+		陕西
+	#elseif($areaCode == "310000")
+		上海
+	#elseif($areaCode == "510000")
+		四川
+	#elseif($areaCode == "120000")
+		天津
+	#elseif($areaCode == "540000")
+		西藏
+	#elseif($areaCode == "650000")
+		新疆
+	#elseif($areaCode == "530000")
+		云南
+	#elseif($areaCode == "330000")
+		浙江
+	#elseif($areaCode == "500000")
+		重庆
+	#end
+	#end
+#end
+
+##计算页码   $totalNum总数   $pageNum每页的页数
+#macro(calcuPage $totalNum,$pageNum)
+	#if($!{totalNum} && $!{pageNum})
+    	#if($totalNum == 0)
+            1
+    	#else
+    		#set($result = ($totalNum - 1) / $pageNum + 1)
+    		$result
+    	#end
+	#else
+		1
+	#end
+#end
+
+#macro(getTagZhName $currentLabelPathName, $tagList)
+	#if($!{currentLabelPathName} && $!{tagList})
+		#foreach($tag in $tagList)
+			#if($!{currentLabelPathName} == $!{tag.pathName})
+				$!{tag.name}
+			#end
+		#end
+	#end
+#end
+
+#macro(formatTime $timestamp)
+$timestamp.toString().substring(0,19)
+#end
+
+##分页控制器 
+	##ex:pageRedirctUrl:$pageRedirctUrl="itemLoveList.do?category=$!{category}&currPageIndex="
+	##pageCount 总页数
+	##currPageIndex 当前页
+
+##分页控制器 
+	##ex:pageRedirctUrl:$pageRedirctUrl="itemLoveList.do?category=$!{category}&currPageIndex="
+	##pageCount 总页数
+	##currPageIndex 当前页
+#macro(pager $pageRedirctUrl,$pageCount,$currPageIndex)
+		#set($nextPage=$!currPageIndex+1)
+		#if($!currPageIndex==$!pageCount)
+			#set($nextPage=$!pageCount)
+		#end
+		#set($prePage=$!currPageIndex+(-1))
+		#if($!currPageIndex==1)
+			#set($prePage=1)
+		#end
+		#set($firstPage="#addUrlParam($pageRedirctUrl,'page', 1)")
+		#set($secondPage="#addUrlParam($pageRedirctUrl,'page', 2)")
+		#set($lastPage="#addUrlParam($pageRedirctUrl, 'page',$pageCount)")
+		#set($prePage="#addUrlParam($pageRedirctUrl,'page', $prePage)")
+		#set($nextPage="#addUrlParam($pageRedirctUrl,'page',$nextPage)")
+		#set($endPage="#addUrlParam($pageRedirctUrl,'page', $pageCount)")
+			
+   #if($pageCount>1) 
+	<div class="dataTables_paginate paging_bootstrap pagination">
+	<ul>
+    #if($currPageIndex != 1)
+		<li class="prev "><a href="$prePage">← 上一页</a></li>
+	#else
+		<li class="prev disabled"><a href="#">← 上一页</a></li>
+    #end
+    #if($pageCount >=9)
+		#if($!{currPageIndex} !=1)
+			<li><a href="$!{firstPage}">1</a></li>
+     	#else
+    		<li class="active"><a href="#">1</a></li>
+     	#end
+        #if($!{currPageIndex} !=2)
+			<li><a href="$!{secondPage}">2</a></li>
+     	#else
+    		<li class="active"><a href="#">2</a></li>
+     	#end
+ 	#end
+ 	
+ 	#if(${currPageIndex} > $!{pageCount})
+ 		#set(${currPageIndex} = $!{pageCount})
+ 	#end
+ 	
+    #if($!{currPageIndex}>0)
+        #if($!{pageCount} <=8)
+   		 		#set($pageStart =1)
+    			#set($pageEnd = $!{pageCount} - 1)
+    	#else
+    		#if($!{pageCount} - $!{currPageIndex}<=3)
+    			<li><a href="#">...</a></li>
+   		 		#set($pageStart =$currPageIndex - 2)
+    			#set($pageEnd = $!{pageCount} - 1)
+    		#else
+    			#if($!{currPageIndex}>=10)
+    			<li><a href="#">...</a></li>
+    				#set($pageStart =$currPageIndex - 3)
+    				#set($pageEnd =$currPageIndex + 2)
+    			 #if(${pageEnd} > $!{pageCount})
+ 					#set(${pageEnd} = $!{pageCount})
+ 				 #end
+    				#set($afterApo = 1)
+    			#else  	
+		   		 	#set($pageStart =3)
+		    		#set($pageEnd =$!{currPageIndex}+2)
+		    		#set($afterApo = 1)
+    			#end
+    	#end
+    	#end 		 
+        #foreach($id in [${pageStart}..${pageEnd}])
+            #if($!id==$!currPageIndex)
+			<li class="active"><a href="#">$!{id}</a></li>
+            #else
+			<li><a href="#addUrlParam($pageRedirctUrl,'page',$!{id})">$!{id}</a></li>
+            #end
+        #end
+     #end
+  
+    	#if($!{pageCount}>1)#if($afterApo)<li><a href="#">...</a></li>#end
+    	
+    	#if($!pageCount!=$!currPageIndex)
+			<li><a href="$!{endPage}">$!{pageCount}</a></li>
+			<li class="next"><a href="$!{nextPage}">下一页 → </a></li>
+		#else
+			<li><a href="#">$!{currPageIndex}</a></li>
+    	#end
+    	#end	
+    	</ul>
+    </div>
+#end
+#end
+##double类型小数点控制到后两位
+	##num 需要格式化的double数值
+#macro(numFormat $num)$number.format('#0.00',$num)#end
+##文本长度控制,由于是字符串
+	##str 需要长度控制的字符串
+	##maxLength 截取的最大长度
+	##subfix 后缀
+#macro(previewText $str,$maxLength,$subfix)
+	#if(!$!{str}||!$!{maxLength}||!$!{subfix})
+		##是空则不执行
+	#else
+    	#if(${str.length()}>${maxLength})
+    		$!{str.substring(0,${maxLength})}$!{subfix}
+    	#else
+    		$!{str}
+		#end
+	#end
+#end
+
+#macro(discountFormat $discount)$number.format('#0.0',$discount)#end
+##将错误码转成相应的文案
+#macro(cancelReasonCodeToString $cancelReason)
+	#if($!{cancelReason})
+		#if($!{cancelReason}==1)
+			<p class="error">试用券不足，交易失败，详情请<a href="http://wpa.qq.com/msgrd?v=3&uin=2488632782&site=qq&menu=yes" target="_blank">咨询客服</a></p>
+		#end
+	#end
+#end
+
+#macro(addUrlParam $url, $paramName, $paramValue)#if($!{url} && $!{paramName} && $!{paramValue})#set($separator = "&")#if($!{url.indexOf("?")} == -1)#set($separator = "?")#end$url$separator$paramName=$!{paramValue}#end
+#end
+
+#macro(removeUrlParam $url, $paramName, $paramValue)#if($!{url} && $!{paramName} && $!{paramValue})#set($beReplace=$!{paramName}+"="+$!{paramValue})#set($url=$!{url.replace($!{beReplace},"")})#set($url = $url.replace("&&", "&"))#set($url = $!{url.replace("?&", "?")})#if($url.endsWith("?"))#set($url = $!{url.replace("?", "")})#end#set($url = $!{url.replaceAll("	","")})#set($url = $!{url.replaceAl(" ","")})#if($!{url.endsWith("&")})#set($url = $!{url.substring(0,$!{url.lastIndexOf("&")})})#end$url#end#end
+
+#macro(addQueryParam $url,$paramValue)#if($!{url})#if($!{url.indexOf("?")}<0)$!{url}?q=$paramValue#else#set($qIndex=$!{url.indexOf("q=")})#if($!{qIndex}<0)$!{url}&q=$!{paramValue}#else#set($beforeStr = $!{url.substring(0,$!{qIndex})})#set($afterStr = $!{url.substring($!{qIndex}, $!{url.length()})})#set($index=$!{afterStr.indexOf("&")})#if ($!{index}<0)${url},$!{paramValue}#else#set($beforeStr1=$!{afterStr.substring(0,$!{index})})#set($afterStr1 = $!{afterStr.substring($!{index}, $!{afterStr.length()})})$!{beforeStr}$!{beforeStr1},$!{paramValue}$!{afterStr1}#end#end#end#end#end
+
+#macro(removeQueryParam $url,$paramValue)#if($!{url})#if($!{url.contains(",$!{paramValue}")})$!{url.replace(",$!{paramValue}", "")}#elseif($!{url.contains("$!{paramValue},")})$!{url.replace("$!{paramValue},", "")}#elseif($!{url.contains("q=$!{paramValue}")})#set($str=$!{url.replace("q=$!{paramValue}","")})#if($!{str.contains("?&")})#set($str=$!{str.replace("?&","?")})#elseif($!{str.contains("&&")})#set($str=$!{str.replace("&&","&")})#elseif($!{str.endsWith("?")})#set($str = $!{str.substring(0,$!{str.lastIndexOf("?")})})#elseif($!{str.endsWith("&")})#set($str = $!{str.substring(0,$!{str.lastIndexOf("&")})})#end$!{str}#end#end#end
+									
+#macro(initUrl $url)#if($!{url})#if($!{url.endsWith("?")})#set($url = $!{url.replace("?", "")})#end#set($url = $!{url.replace("?&", "?")})$url#end
+#end

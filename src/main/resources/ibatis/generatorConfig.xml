@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE generatorConfiguration PUBLIC "-//mybatis.org//DTD MyBatis Generator Configuration 1.0//EN" "http://mybatis.org/dtd/mybatis-generator-config_1_0.dtd" >
+<generatorConfiguration >
+	<classPathEntry location="/Users/sleepwalker/git/mysql-connector-java-5.1.38.jar"/>
+	<context id="context1" >
+		<commentGenerator>
+			<property name="suppressAllComments" value="true" />
+		</commentGenerator>
+    	<jdbcConnection driverClass="com.mysql.jdbc.Driver" connectionURL="jdbc:mysql://localhost:3306/dingdong" userId="root" password="19900718" />
+    	<javaModelGenerator targetPackage="com.sleepwalker.dingdong.video.model" targetProject="DingDong" />
+    	<sqlMapGenerator targetPackage="com.sleepwalker.dingdong.video.dao" targetProject="DingDong" />
+    	<javaClientGenerator targetPackage="com.sleepwalker.dingdong.video.dao" targetProject="DingDong" type="XMLMAPPER" />
+   	
+    	<table tableName="video_update_url" domainObjectName="VideoUpdateUrl" 
+    		enableCountByExample="false"
+    		enableUpdateByExample="false" 
+      		enableDeleteByExample="false"
+      		enableSelectByExample="false" 
+      		selectByExampleQueryId="false"/>
+  </context>
+</generatorConfiguration>

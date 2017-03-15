@@ -1,0 +1,76 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:security="http://www.springframework.org/schema/security"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+  		  http://www.springframework.org/schema/beans/spring-beans-4.2.xsd
+          http://www.springframework.org/schema/security
+          http://www.springframework.org/schema/security/spring-security-4.0.xsd">
+
+
+	<security:http auto-config="true">
+		<security:form-login login-page="/login" />
+		<security:remember-me key="yunjee"
+			token-validity-seconds="31536000" />
+			
+   		<security:csrf disabled="true" />
+	</security:http>
+	
+	<!-- 权限管理操作 -->
+	<security:authentication-manager alias="authenticationManager">
+		<security:authentication-provider
+			ref="daoAuthenticationProvider">
+		</security:authentication-provider>
+	</security:authentication-manager>
+
+
+
+	<bean id="daoAuthenticationProvider"
+		class="org.springframework.security.authentication.dao.DaoAuthenticationProvider">
+		<property name="userDetailsService" ref="userDetailService"></property>
+		<property name="passwordEncoder" ref="md5PasswordEncoder"></property>
+		<property name="userCache" ref="ehCacheBasedUserCache"></property>
+		<property name="hideUserNotFoundExceptions" value="false" /><!-- 
+			没有这个将不能准确地报告异常 -->
+	</bean>
+
+	<bean id="md5PasswordEncoder"
+		class="org.springframework.security.authentication.encoding.Md5PasswordEncoder">
+	</bean>
+
+	<bean id="userDetailService" class="com.sleepwalker.security.UserDetailService">
+	</bean>
+	<!-- 启用用户的缓存功能 -->
+
+	<bean id="ehCacheBasedUserCache"
+		class="org.springframework.security.core.userdetails.cache.EhCacheBasedUserCache">
+		<property name="cache" ref="userEhCache" />
+	</bean>
+	
+	<bean id="userEhCache" class="org.springframework.cache.ehcache.EhCacheFactoryBean">
+		<property name="cacheManager" ref="cacheManager" />
+		<property name="cacheName" value="userCache" />
+	</bean>
+
+	<bean id="cacheManager"
+		class="org.springframework.cache.ehcache.EhCacheManagerFactoryBean">
+		<property name="configLocation">
+			<value>classpath:spring/security/ehcache.xml</value>
+		</property>
+	</bean>
+
+	<bean id="SecurityServiceImp" class="com.sleepwalker.security.imp.SecurityServiceImp">
+		<property name="daoAuthenticationProvider" ref="daoAuthenticationProvider"></property>
+		<property name="userDetailService" ref="userDetailService"></property>
+	</bean>
+	
+	<bean id="handlerMapping"
+		class="org.springframework.web.servlet.mvc.annotation.DefaultAnnotationHandlerMapping">
+		<property name="interceptors">
+			<list>
+				<ref bean="controllerHandlerInterceptor" />
+			</list>
+		</property>
+	</bean>
+	
+
+</beans>
