@@ -3,6 +3,7 @@ package com.sleepwalker.dingdong.analyze.ttmj;
 import java.util.List;
 
 import org.apache.http.NameValuePair;
+import org.apache.log4j.Logger;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.springframework.stereotype.Service;
@@ -23,11 +24,19 @@ public class TTMeiJuTVDramaAnalyzeService extends TTMeiJuAnalyzeService {
 
     private static final VideoType VIDEO_TYPE    = VideoType.TTMJ_TV_DRAMA;
 
+    private static final Logger    logger        = Logger
+        .getLogger(TTMeiJuTVDramaAnalyzeService.class);
+
     @Override
     protected Document getDocument(String url, List<NameValuePair> nameValuePairs) {
         String result = HttpClientUtil.post(url, nameValuePairs);
-        JSONObject jsonObject = JSON.parseObject(result);
-        return Jsoup.parse(HTML_PRE + jsonObject.get(JSON_HTML_KEY) + HTML_SUF);
+        try {
+            JSONObject jsonObject = JSON.parseObject(result);
+            return Jsoup.parse(HTML_PRE + jsonObject.get(JSON_HTML_KEY) + HTML_SUF);
+        } catch (Exception e) {
+            logger.error("", e);
+        }
+        return null;
     }
 
     @Override

@@ -27,15 +27,6 @@
 		</filter>
 	</appender>
 
-	<appender name="file" class="org.apache.log4j.RollingFileAppender">
-		<param name="File" value="../cayenee.log" />
-		<param name="Append" value="true" />
-		<param name="MaxBackupIndex" value="10" />
-		<layout class="org.apache.log4j.PatternLayout">
-			<param name="ConversionPattern" value="%-5d-%p (%c:%L)- %m%n" />
-		</layout>
-	</appender>
-
 	<!-- Application Loggers -->
 	<logger name="com.sleepwalker">
 		<level value="info" />

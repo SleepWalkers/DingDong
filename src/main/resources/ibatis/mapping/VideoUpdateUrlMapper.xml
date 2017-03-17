@@ -11,7 +11,7 @@
     <result column="GMT_MODIFIED" jdbcType="TIMESTAMP" property="gmtModified" />
   </resultMap>
   
-  <insert id="insert" parameterType="com.sleepwalker.dingdong.video.model.VideoUpdateUrl">
+  <insert id="insert" parameterType="com.sleepwalker.dingdong.video.model.VideoUpdateUrl"  useGeneratedKeys="true" keyProperty="id">
     insert into video_update_url
     <trim prefix="(" suffix=")" suffixOverrides=",">
       <if test="id != null">
@@ -90,10 +90,17 @@
     where ID = #{id,jdbcType=BIGINT}
   </delete>
 
-  <select id="selectById" parameterType="java.lang.Long" resultMap="ResultMapWithBLOBs">
+  <select id="selectById" parameterType="java.lang.Long" resultMap="BaseResultMap">
     select *
     from video_update_url
     where ID = #{id,jdbcType=BIGINT}
   </select>
+  
+  <select id="selectByVideoId" parameterType="int" resultMap="BaseResultMap">
+    select *
+    from video_update_url
+    where VIDEO_ID = #{videoId}
+  </select>
+  
   
 </mapper>

@@ -45,7 +45,7 @@ public class VideoSource {
     }
 
     public String getUnicode() {
-        return SecurityMD5Util.toMD5(videoId + name + url);
+        return SecurityMD5Util.toMD5(name + url);
     }
 
     public long getId() {

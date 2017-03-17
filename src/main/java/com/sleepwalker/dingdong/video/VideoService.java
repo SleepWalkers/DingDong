@@ -10,4 +10,6 @@ public interface VideoService {
     void add(VideoUpdateUrl videoUpdateUrl);
 
     void add(Video video, VideoUpdateUrl videoUpdateUrl);
+
+    VideoUpdateUrl getVideoUpdateUrl(int videoId);
 }

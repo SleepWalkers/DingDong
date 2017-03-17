@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.sleepwalker.dingdong.video.dao.VideoSourceDao">
-  <resultMap id="BaseResultMap" type="com.sleepwalker.dingdong.video.VideoSourceSource">
+  <resultMap id="BaseResultMap" type="com.sleepwalker.dingdong.video.model.VideoSource">
     <id column="ID" jdbcType="BIGINT" property="id" />
     <result column="NAME" jdbcType="VARCHAR" property="name" />
     <result column="VIDEO_ID" jdbcType="BIGINT" property="videoId" />
@@ -12,8 +12,8 @@
     <result column="GMT_MODIFIED" jdbcType="TIMESTAMP" property="gmtModified" />
   </resultMap>
 
-  <insert id="insert" parameterType="com.sleepwalker.dingdong.video.VideoSource">
-    insert into video
+  <insert id="insert" parameterType="com.sleepwalker.dingdong.video.model.VideoSource"  useGeneratedKeys="true" keyProperty="id">
+    insert into video_source
     <trim prefix="(" suffix=")" suffixOverrides=",">
       <if test="id != null">
         ID,
@@ -67,8 +67,8 @@
       </if>
     </trim>
   </insert>
-  <update id="updateById" parameterType="com.sleepwalker.dingdong.video.VideoSource">
-    update video
+  <update id="updateById" parameterType="com.sleepwalker.dingdong.video.model.VideoSource">
+    update video_source
     <set>
       <if test="name != null">
         NAME = #{name,jdbcType=VARCHAR},
@@ -96,19 +96,19 @@
   </update>
   
   <delete id="deleteById" parameterType="java.lang.Long">
-    delete from video
+    delete from video_source
     where ID = #{id,jdbcType=BIGINT}
   </delete>
   
   <select id="selectById" parameterType="java.lang.Long" resultMap="BaseResultMap">
     select *
-    from video
+    from video_source
     where ID = #{id,jdbcType=BIGINT}
   </select>
   
-  <select id="selectByType" parameterType="java.lang.Long" resultMap="BaseResultMap">
+  <select id="selectByVideoId" parameterType="java.lang.Long" resultMap="BaseResultMap">
     select * 
-    from video where type = #{type}
+    from video_source where VIDEO_ID = #{videoId}
 	order by ID desc
 	<if test="start >= 0">
 		<if test="limit > 0 ">

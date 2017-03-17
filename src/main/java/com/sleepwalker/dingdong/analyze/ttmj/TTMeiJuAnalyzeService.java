@@ -28,10 +28,19 @@ public abstract class TTMeiJuAnalyzeService extends HtmlAnalyzeService {
         if (document == null) {
             return null;
         }
-        Elements elements = document.getElementsByClass("Scontent");
+        Elements elements = document.getElementsByClass("Scontent1");
+
         if (elements == null) {
             return null;
         }
+        Elements elements2 = document.getElementsByClass("Scontent");
+
+        List<Element> elementList = new ArrayList<>();
+        for (int i = 0; i < elements.size(); i++) {
+            elementList.add(elements.get(i));
+            elementList.add(elements2.get(i));
+        }
+        elements = new Elements(elementList);
 
         return buildVideos(elements);
     }
@@ -44,6 +53,7 @@ public abstract class TTMeiJuAnalyzeService extends HtmlAnalyzeService {
             Elements trElements = getFieldElements(elements.get(i));
             VideoSource videoSource = buildVideo(trElements);
             if (videoSource == null || StringUtils.isBlank(videoSource.getUrl())) {
+                logger.info(videoSource.getName() + "无磁力或电驴链接");
                 continue;
             }
             videoSources.add(videoSource);
@@ -68,12 +78,12 @@ public abstract class TTMeiJuAnalyzeService extends HtmlAnalyzeService {
     }
 
     protected String getFormat(Elements elements) {
-        Element formatElement = elements.get(5);
+        Element formatElement = elements.get(4);
         return formatElement.text();
     }
 
     protected double getSize(Elements elements) {
-        Element sizeElement = elements.get(4);
+        Element sizeElement = elements.get(3);
         String sizeStr = sizeElement.text();
 
         if (StringUtils.isBlank(sizeStr)) {
@@ -97,7 +107,7 @@ public abstract class TTMeiJuAnalyzeService extends HtmlAnalyzeService {
     }
 
     protected String getUrl(Elements elements) {
-        Element urlElement = elements.get(3);
+        Element urlElement = elements.get(2);
         List<Node> urlNodes = urlElement.childNodes();
 
         for (Node node : urlNodes) {
@@ -116,7 +126,7 @@ public abstract class TTMeiJuAnalyzeService extends HtmlAnalyzeService {
     }
 
     protected String getName(Elements elements) {
-        Element nameElement = elements.get(2);
+        Element nameElement = elements.get(1);
         Node chileNode = nameElement.childNode(0);
         List<Node> chilechileNode = chileNode.childNodes();
         return chilechileNode.get(0).toString();

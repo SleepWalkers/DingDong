@@ -20,6 +20,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Node;
 import org.jsoup.select.Elements;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -33,7 +34,6 @@ import com.sleepwalker.dingdong.video.VideoSourceService;
 import com.sleepwalker.dingdong.video.model.Video;
 import com.sleepwalker.dingdong.video.model.Video.VideoStatus;
 import com.sleepwalker.dingdong.video.model.VideoSource;
-import com.sleepwalker.dingdong.video.model.VideoSource.VideoType;
 import com.sleepwalker.dingdong.video.model.VideoUpdateUrl;
 import com.sleepwalker.utils.HttpClientUtil;
 
@@ -49,6 +49,9 @@ public class TTMeiJuSpiderController {
     @Resource
     private AnalyzeService       ttMeiJuMovieAnalyzeService;
 
+    @Resource
+    private AnalyzeService       ttMeiJuTVDramaAnalyzeService;
+
     private static final Logger  logger               = Logger
         .getLogger(TTMeiJuSpiderController.class);
 
@@ -58,7 +61,8 @@ public class TTMeiJuSpiderController {
 
     private static final String  DOMAIN               = "http://www.ttmeiju.com";
 
-    private static final String  VIDEO_LIST_URL       = DOMAIN + "/summary.html";
+    private static final String  VIDEO_LIST_URL       = DOMAIN
+                                                        + "/index.php/summary/index/p/%s.html";
 
     private static final String  MOVIE_START_URL      = "http://www.ttmeiju.com/index.php/meiju/index/engename/Movie/p/%s.html";
 
@@ -68,43 +72,162 @@ public class TTMeiJuSpiderController {
         OUT_VIDEO_ID_RE_1 + OUT_VIDEO_ID_RE_2 + OUT_VIDEO_ID_RE_3,
         Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
 
-    @ResponseBody
-    @RequestMapping(value = "/api/spider/video/ttmeiju/loadList", method = RequestMethod.GET)
-    public String ttMeiJuLoadList() throws IOException {
-        Document document = Jsoup.connect(VIDEO_LIST_URL).get();
+    public static void main(String[] args) {
+        List<NameValuePair> paramsList = new ArrayList<>();
+        paramsList.add(new BasicNameValuePair("mid", 484 + ""));
+        paramsList.add(new BasicNameValuePair("sid", 1 + ""));
 
-        Elements tableElements = document.getElementsByTag("table");
-        for (Element tableElement : tableElements) {
-
-            Elements elements = tableElement.getElementsByTag("tr");
-
-            System.out.println(elements);
-        }
-
-        return null;
-
+        System.out.println(HttpClientUtil
+            .post("http://www.ttmeiju.com/index.php/meiju/get_episodies.html", paramsList));
     }
 
     @ResponseBody
+    @RequestMapping(value = "/api/spider/video/ttmeiju/loadList", method = RequestMethod.GET)
+    public String ttMeiJuLoadList() throws IOException {
+        //        boolean firstLoop = true;
+        //        int index = 10;
+        //        for (int i = 1; i > 0; i--) {
+        //            String url = String.format(VIDEO_LIST_URL, i);
+        //            if (!firstLoop) {
+        //                index = 1;
+        //            } else {
+        //                firstLoop = false;
+        //            }
+        //            loadList(index, url);
+        //            logger.info("抓取第" + i + "页");
+        //        }
+
+        String[] urlArr = { DOMAIN + "/meiju/Game.of.Thrones.html",
+                            DOMAIN + "/meiju/The.Big.Bang.Theory.html",
+                            DOMAIN + "/meiju/THE.Walking.Dead.html" };
+        int[] videoIdArr = { 1164, 1165, 1166 };
+        for (int i = 0; i < urlArr.length; i++) {
+            loadDetail(videoIdArr[i], urlArr[i]);
+        }
+        return new JsonVO(true).toString();
+    }
+
+    private void loadList(int index, String url) throws IOException {
+        List<Element> videoElements = getVideoElements(index, url);
+        for (Element videoElement : videoElements) {
+            List<Node> nodes = videoElement.childNodes();
+            Node nameAndUrlNode = nodes.get(3).childNode(0);
+            String detailUrl = DOMAIN + nameAndUrlNode.attr("href").toString();
+
+            if (detailUrl.equals("http://www.ttmeiju.com/meiju/Movie.html")) {
+                continue;
+            }
+            Video video = new Video();
+            video.setName(getName(nodes));
+            video.setStatus(getVideoStatus(nodes));
+            video.setWeekOfDay(getWeekOfDay(nodes));
+            video.setReturnTime(getReturnTime(nodes));
+
+            String html = HttpClientUtil.get(detailUrl, null);
+
+            int outVideoId = getOutVideoId(html);
+            List<Integer> seasons = getSeasons(html);
+
+            if (outVideoId == 0 || seasons == null || seasons.isEmpty()) {
+                continue;
+            }
+            video.setSeason(seasons.get(0));
+
+            VideoUpdateUrl videoUpdateUrl = new VideoUpdateUrl();
+            videoUpdateUrl.setFromSiteId(1);
+            videoUpdateUrl.setUpdateUrl(TV_DRAMA_URL);
+
+            Map<String, Integer> paramMap = new HashMap<>();
+            paramMap.put("sid", seasons.get(0));
+            paramMap.put("mid", outVideoId);
+            videoUpdateUrl.setUpdateParams(JSON.toJSONString(paramMap));
+
+            videoService.add(video, videoUpdateUrl);
+
+            List<NameValuePair> nameValuePairs = new ArrayList<>();
+            Collections.reverse(seasons);
+            for (int season : seasons) {
+                nameValuePairs.clear();
+                nameValuePairs.add(new BasicNameValuePair("sid", season + ""));
+                nameValuePairs.add(new BasicNameValuePair("mid", outVideoId + ""));
+                List<VideoSource> newVideoSources = ttMeiJuTVDramaAnalyzeService
+                    .analyse(TV_DRAMA_URL, nameValuePairs);
+                if (newVideoSources == null || newVideoSources.isEmpty()) {
+                    continue;
+                }
+                Collections.reverse(newVideoSources);
+                videoSourceService.add(video.getId(), newVideoSources);
+                logger.info("mid=" + outVideoId + ",sid=" + season);
+            }
+        }
+    }
+
+    private void loadDetail(int videoId, String detailUrl) {
+
+        String html = HttpClientUtil.get(detailUrl, null);
+
+        int outVideoId = getOutVideoId(html);
+        List<Integer> seasons = getSeasons(html);
+
+        if (outVideoId == 0 || seasons == null || seasons.isEmpty()) {
+            return;
+        }
+
+        VideoUpdateUrl videoUpdateUrl = new VideoUpdateUrl();
+        videoUpdateUrl.setFromSiteId(1);
+        videoUpdateUrl.setUpdateUrl(TV_DRAMA_URL);
+
+        Map<String, Integer> paramMap = new HashMap<>();
+        paramMap.put("sid", seasons.get(0));
+        paramMap.put("mid", outVideoId);
+        videoUpdateUrl.setUpdateParams(JSON.toJSONString(paramMap));
+
+        videoUpdateUrl.setVideoId(videoId);
+        videoService.add(videoUpdateUrl);
+
+        List<NameValuePair> nameValuePairs = new ArrayList<>();
+        Collections.reverse(seasons);
+        for (int season : seasons) {
+            nameValuePairs.clear();
+            nameValuePairs.add(new BasicNameValuePair("sid", season + ""));
+            nameValuePairs.add(new BasicNameValuePair("mid", outVideoId + ""));
+            List<VideoSource> newVideoSources = ttMeiJuTVDramaAnalyzeService.analyse(TV_DRAMA_URL,
+                nameValuePairs);
+            if (newVideoSources == null || newVideoSources.isEmpty()) {
+                continue;
+            }
+            Collections.reverse(newVideoSources);
+            videoSourceService.add(videoId, newVideoSources);
+            logger.info("mid=" + outVideoId + ",sid=" + season);
+        }
+    }
+
+    @Scheduled(cron = "0 0 0/1 * * ?")
+    @ResponseBody
     @RequestMapping(value = "/api/spider/video/ttmeiju/movie", method = RequestMethod.GET)
     public String ttMeiJuMovieSpider() {
-        VideoSource lastVideo = videoSourceService.getLast(VideoType.TTMJ_MOVIE);
+        VideoSource lastVideo = videoSourceService.getLast(1);
 
-        List<VideoSource> allNewVideos = new ArrayList<>();
-        for (int i = 0;; i++) {
-            String url = String.format(MOVIE_START_URL, i);
-            List<VideoSource> newVideos = ttMeiJuMovieAnalyzeService.analyse(url, null);
-            if (newVideos == null || newVideos.isEmpty()) {
-                break;
-            }
-            boolean needLoop = addNewVideo(lastVideo, newVideos, allNewVideos);
-            if (!needLoop) {
-                break;
-            }
-            logger.info("抓取第" + i + "页");
+        VideoUpdateUrl movieUpdateUrl = videoService.getVideoUpdateUrl(1);
+
+        if (movieUpdateUrl == null) {
+            return new JsonVO(true).toString();
         }
-        Collections.reverse(allNewVideos);
-        videoSourceService.add(allNewVideos);
+        String updateUrl = movieUpdateUrl.getUpdateUrl();
+
+        List<VideoSource> newVideos = ttMeiJuMovieAnalyzeService.analyse(updateUrl, null);
+        if (newVideos == null || newVideos.isEmpty()) {
+            return new JsonVO(true).toString();
+        }
+
+        for (int i = 0; i < newVideos.size(); i++) {
+            if (newVideos.get(i).getUnicode().equals(lastVideo.getUnicode())) {
+                newVideos = newVideos.subList(0, i);
+                break;
+            }
+        }
+        Collections.reverse(newVideos);
+        videoSourceService.add(newVideos);
         return new JsonVO(true).toString();
     }
 
@@ -128,59 +251,13 @@ public class TTMeiJuSpiderController {
         return new JsonVO(true).toString();
     }
 
-    private void load() throws IOException {
-        List<Element> videoElements = getVideoElements();
-        for (Element videoElement : videoElements) {
-            List<Node> nodes = videoElement.childNodes();
-            Node nameAndUrlNode = nodes.get(3).childNode(0);
-            String url = DOMAIN + nameAndUrlNode.attr("href").toString();
-
-            Video video = new Video();
-            video.setName(getName(nodes));
-            video.setStatus(getVideoStatus(nodes));
-            video.setWeekOfDay(getWeekOfDay(nodes));
-            video.setReturnTime(getReturnTime(nodes));
-
-            String html = HttpClientUtil.get(url, null);
-
-            int outVideoId = getOutVideoId(html);
-            List<Integer> seasons = getSeasons(html);
-
-            if (outVideoId == 0 || seasons == null || seasons.isEmpty()) {
-                continue;
-            }
-            video.setSeason(seasons.get(0));
-
-            VideoUpdateUrl videoUpdateUrl = new VideoUpdateUrl();
-            videoUpdateUrl.setFromSiteId(1);
-            videoUpdateUrl.setUpdateUrl(TV_DRAMA_URL);
-            videoUpdateUrl.setVideoId(video.getId());
-
-            Map<String, Integer> paramMap = new HashMap<>();
-            paramMap.put("sid", seasons.get(0));
-            paramMap.put("mid", outVideoId);
-            videoUpdateUrl.setUpdateParams(JSON.toJSONString(paramMap));
-
-            videoService.add(video, videoUpdateUrl);
-
-            List<NameValuePair> nameValuePairs = new ArrayList<>();
-            Collections.reverse(seasons);
-            for (int season : seasons) {
-                nameValuePairs.clear();
-                nameValuePairs.add(new BasicNameValuePair("sid", season + ""));
-                nameValuePairs.add(new BasicNameValuePair("mid", outVideoId + ""));
-                List<VideoSource> newVideoSources = ttMeiJuMovieAnalyzeService.analyse(TV_DRAMA_URL,
-                    nameValuePairs);
-                videoSourceService.add(video.getId(), newVideoSources);
-                logger.info("mid=" + outVideoId + ",sid=" + season);
-            }
-        }
-    }
-
     private List<Integer> getSeasons(String html) {
 
         Document document = Jsoup.parse(html);
         Element element = document.getElementById("seasoninfo");
+        if (element == null) {
+            return null;
+        }
         Elements seasonElements = element.getElementsByTag("h3");
 
         if (seasonElements.isEmpty()) {
@@ -222,10 +299,11 @@ public class TTMeiJuSpiderController {
         return videoStatus.getType();
     }
 
-    private List<Element> getVideoElements() throws IOException {
-        Document document = Jsoup.connect(VIDEO_LIST_URL).get();
+    private List<Element> getVideoElements(int index, String url) throws IOException {
+        Document document = Jsoup.connect(url).get();
         Elements tableElements = document.getElementsByTag("table").get(0).getElementsByTag("tr");
-        return tableElements.subList(4, 1003);
+        List<Element> elements = tableElements.subList(index, tableElements.size() - 1);
+        return elements;
     }
 
     private Timestamp getReturnTime(List<Node> nodes) {
@@ -234,7 +312,12 @@ public class TTMeiJuSpiderController {
         if (returnTime.equals("暂无")) {
             return null;
         } else {
-            return Timestamp.valueOf(returnTime);
+            try {
+                return Timestamp.valueOf(returnTime + " 00:00:00");
+            } catch (Exception e) {
+                logger.error("", e);
+            }
+            return null;
         }
     }
 
@@ -260,21 +343,5 @@ public class TTMeiJuSpiderController {
         } else {
             return -1;
         }
-    }
-
-    private boolean addNewVideo(VideoSource lastVideo, List<VideoSource> newVideos,
-                                List<VideoSource> allNewVideos) {
-        if (lastVideo == null) {
-            allNewVideos.addAll(newVideos);
-            return true;
-        }
-        for (int i = 0; i < newVideos.size(); i++) {
-            if (newVideos.get(i).getUnicode().equals(lastVideo.getUnicode())) {
-                allNewVideos.addAll(newVideos.subList(0, i));
-                return false;
-            }
-        }
-        allNewVideos.addAll(newVideos);
-        return true;
     }
 }

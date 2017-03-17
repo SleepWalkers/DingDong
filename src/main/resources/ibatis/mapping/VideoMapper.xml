@@ -14,7 +14,7 @@
   </resultMap>
   
 
-  <insert id="insert" parameterType="com.sleepwalker.dingdong.video.model.Video">
+  <insert id="insert" parameterType="com.sleepwalker.dingdong.video.model.Video" useGeneratedKeys="true" keyProperty="id">
     insert into video
     <trim prefix="(" suffix=")" suffixOverrides=",">
       <if test="id != null">

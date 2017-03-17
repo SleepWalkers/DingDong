@@ -15,6 +15,6 @@ public interface VideoSourceDao {
 
     VideoSource selectById(long id);
 
-    List<VideoSource> selectByType(@Param("type") int type, @Param("start") int start,
-                             @Param("limit") int limit);
+    List<VideoSource> selectByVideoId(@Param("videoId") long videoId, @Param("start") int start,
+                                      @Param("limit") int limit);
 }

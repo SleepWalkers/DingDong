@@ -9,7 +9,6 @@ import org.springframework.stereotype.Service;
 import com.sleepwalker.dingdong.video.VideoSourceService;
 import com.sleepwalker.dingdong.video.dao.VideoSourceDao;
 import com.sleepwalker.dingdong.video.model.VideoSource;
-import com.sleepwalker.dingdong.video.model.VideoSource.VideoType;
 import com.sleepwalker.utils.PageUtil;
 
 @Service("videoSourceService")
@@ -19,11 +18,11 @@ public class VideoSourceServiceImp implements VideoSourceService {
     private VideoSourceDao videoSourceDao;
 
     @Override
-    public VideoSource getLast(VideoType videoType) {
-        if (videoType == null) {
+    public VideoSource getLast(int videoId) {
+        if (videoId <= 0) {
             return null;
         }
-        List<VideoSource> videoSources = videoSourceDao.selectByType(videoType.getType(), 0, 1);
+        List<VideoSource> videoSources = videoSourceDao.selectByVideoId(videoId, 0, 1);
         if (videoSources.isEmpty()) {
             return null;
         }
@@ -31,11 +30,11 @@ public class VideoSourceServiceImp implements VideoSourceService {
     }
 
     @Override
-    public List<VideoSource> get(VideoType videoType, int page, int pageSize) {
-        if (videoType == null) {
+    public List<VideoSource> get(int videoId, int page, int pageSize) {
+        if (videoId <= 0) {
             return null;
         }
-        return videoSourceDao.selectByType(videoType.getType(), PageUtil.getStart(page, pageSize),
+        return videoSourceDao.selectByVideoId(videoId, PageUtil.getStart(page, pageSize),
             PageUtil.getLimit(page, pageSize));
     }
 
