@@ -1,4 +1,4 @@
-package com.sleepwalker.dingdong.web;
+package com.sleepwalker.dingdong.web.ttmj;
 
 import java.io.IOException;
 import java.sql.Timestamp;
@@ -20,7 +20,6 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Node;
 import org.jsoup.select.Elements;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -52,34 +51,30 @@ public class TTMeiJuSpiderController {
     @Resource
     private AnalyzeService       ttMeiJuTVDramaAnalyzeService;
 
-    private static final Logger  logger               = Logger
+    private static final Logger  logger                     = Logger
         .getLogger(TTMeiJuSpiderController.class);
 
-    private static final String  OUT_VIDEO_ID_RE_1    = "<script src=\"\\/index.php\\/user\\/rss_status\\/mid\\/";
-    private static final String  OUT_VIDEO_ID_RE_2    = "(\\d+)";
-    private static final String  OUT_VIDEO_ID_RE_3    = "\\.html\"";
+    private static final String  OUT_VIDEO_ID_RE_1          = "<script src=\"\\/index.php\\/user\\/rss_status\\/mid\\/";
+    private static final String  OUT_VIDEO_ID_RE_2          = "(\\d+)";
+    private static final String  OUT_VIDEO_ID_RE_3          = "\\.html\"";
 
-    private static final String  DOMAIN               = "http://www.ttmeiju.com";
+    private static final String  DOMAIN                     = "http://www.ttmeiju.com";
 
-    private static final String  VIDEO_LIST_URL       = DOMAIN
-                                                        + "/index.php/summary/index/p/%s.html";
+    private static final String  VIDEO_LIST_URL             = DOMAIN
+                                                              + "/index.php/summary/index/p/%s.html";
 
-    private static final String  MOVIE_START_URL      = "http://www.ttmeiju.com/index.php/meiju/index/engename/Movie/p/%s.html";
+    private static final String  MOVIE_START_URL            = "http://www.ttmeiju.com/index.php/meiju/index/engename/Movie/p/%s.html";
 
-    private static final String  TV_DRAMA_URL         = "http://www.ttmeiju.com/index.php/meiju/get_episodies.html";
+    private static final String  TV_DRAMA_URL               = "http://www.ttmeiju.com/index.php/meiju/get_episodies.html";
 
-    private static final Pattern OUT_VIDEO_ID_PATTERN = Pattern.compile(
-        OUT_VIDEO_ID_RE_1 + OUT_VIDEO_ID_RE_2 + OUT_VIDEO_ID_RE_3,
+    private static final String  SEASON_RE                  = ".*\\s+S(\\d+)E(\\d+)";
+
+    private static final Pattern SEASON_AND_EPSIODE_PATTERN = Pattern.compile(SEASON_RE,
         Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
 
-    public static void main(String[] args) {
-        List<NameValuePair> paramsList = new ArrayList<>();
-        paramsList.add(new BasicNameValuePair("mid", 484 + ""));
-        paramsList.add(new BasicNameValuePair("sid", 1 + ""));
-
-        System.out.println(HttpClientUtil
-            .post("http://www.ttmeiju.com/index.php/meiju/get_episodies.html", paramsList));
-    }
+    private static final Pattern OUT_VIDEO_ID_PATTERN       = Pattern.compile(
+        OUT_VIDEO_ID_RE_1 + OUT_VIDEO_ID_RE_2 + OUT_VIDEO_ID_RE_3,
+        Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
 
     @ResponseBody
     @RequestMapping(value = "/api/spider/video/ttmeiju/loadList", method = RequestMethod.GET)
@@ -202,35 +197,6 @@ public class TTMeiJuSpiderController {
         }
     }
 
-    @Scheduled(cron = "0 0 0/1 * * ?")
-    @ResponseBody
-    @RequestMapping(value = "/api/spider/video/ttmeiju/movie", method = RequestMethod.GET)
-    public String ttMeiJuMovieSpider() {
-        VideoSource lastVideo = videoSourceService.getLast(1);
-
-        VideoUpdateUrl movieUpdateUrl = videoService.getVideoUpdateUrl(1);
-
-        if (movieUpdateUrl == null) {
-            return new JsonVO(true).toString();
-        }
-        String updateUrl = movieUpdateUrl.getUpdateUrl();
-
-        List<VideoSource> newVideos = ttMeiJuMovieAnalyzeService.analyse(updateUrl, null);
-        if (newVideos == null || newVideos.isEmpty()) {
-            return new JsonVO(true).toString();
-        }
-
-        for (int i = 0; i < newVideos.size(); i++) {
-            if (newVideos.get(i).getUnicode().equals(lastVideo.getUnicode())) {
-                newVideos = newVideos.subList(0, i);
-                break;
-            }
-        }
-        Collections.reverse(newVideos);
-        videoSourceService.add(newVideos);
-        return new JsonVO(true).toString();
-    }
-
     @ResponseBody
     @RequestMapping(value = "/api/spider/video/ttmeiju/tvDrama", method = RequestMethod.GET)
     public String ttMeiJuTvDramaSpider() {
@@ -249,6 +215,59 @@ public class TTMeiJuSpiderController {
             }
         }
         return new JsonVO(true).toString();
+    }
+
+    @ResponseBody
+    @RequestMapping(value = "/api/spider/video/ttmeiju/updateSeasonAndEpisode", method = RequestMethod.GET)
+    public void updateE() {
+
+        int page = 1;
+        int pageSize = 20;
+        List<Video> videos = videoService.get(page, pageSize);
+        videos.remove(0);
+        do {
+            for (Video video : videos) {
+                updateSeasonAndEpisode(video);
+            }
+            page++;
+            videos = videoService.get(page, pageSize);
+        } while (videos != null && !videos.isEmpty());
+    }
+
+    private void updateSeasonAndEpisode(Video video) {
+
+        int page = 1;
+        int pageSize = 20;
+        List<VideoSource> videoSources = videoSourceService.get(video.getId(), page, pageSize);
+
+        int maxSeason = video.getSeason();
+        int maxEpisode = 1;
+        do {
+            for (VideoSource videoSource : videoSources) {
+                Matcher m = SEASON_AND_EPSIODE_PATTERN.matcher(videoSource.getName());
+                logger.info(video.getName());
+                if (m.find()) {
+                    logger.info("season: " + m.group(1) + " episode: " + m.group(2));
+                    if (Integer.parseInt(m.group(1)) == maxSeason) {
+                        if (Integer.parseInt(m.group(2)) > maxEpisode) {
+                            maxEpisode = Integer.parseInt(m.group(2));
+                        }
+                    } else if (Integer.parseInt(m.group(1)) > maxSeason) {
+                        maxSeason = Integer.parseInt(m.group(1));
+                        maxEpisode = 1;
+                        if (Integer.parseInt(m.group(2)) > maxEpisode) {
+                            maxEpisode = Integer.parseInt(m.group(2));
+                        }
+                    }
+                }
+            }
+            page++;
+            videoSources = videoSourceService.get(video.getId(), page, pageSize);
+        } while (videoSources != null && !videoSources.isEmpty());
+
+        video.setEpisode(maxEpisode);
+        video.setSeason(maxSeason);
+        videoService.update(video);
     }
 
     private List<Integer> getSeasons(String html) {

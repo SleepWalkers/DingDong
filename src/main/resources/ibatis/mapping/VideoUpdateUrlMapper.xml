@@ -102,5 +102,10 @@
     where VIDEO_ID = #{videoId}
   </select>
   
-  
+  <select id="selectByDayAndStatus" parameterType="int" resultMap="BaseResultMap">
+  	SELECT video_update_url.* 
+  	from video INNER JOIN video_update_url
+	on video.ID = video_update_url.VIDEO_ID
+	where video.WEEK_OF_DAY = #{dayOfWeek} and video.`STATUS` = #{status}
+  </select>
 </mapper>

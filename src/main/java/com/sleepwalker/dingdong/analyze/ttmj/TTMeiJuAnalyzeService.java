@@ -38,7 +38,9 @@ public abstract class TTMeiJuAnalyzeService extends HtmlAnalyzeService {
         List<Element> elementList = new ArrayList<>();
         for (int i = 0; i < elements.size(); i++) {
             elementList.add(elements.get(i));
-            elementList.add(elements2.get(i));
+            if (elements2.size() > i) {
+                elementList.add(elements2.get(i));
+            }
         }
         elements = new Elements(elementList);
 

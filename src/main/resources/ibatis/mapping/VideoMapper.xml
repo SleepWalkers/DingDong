@@ -47,7 +47,7 @@
     </trim>
     <trim prefix="values (" suffix=")" suffixOverrides=",">
       <if test="id != null">
-        #{id,jdbcType=BIGINT},
+        #{id},
       </if>
       <if test="name != null">
         #{name,jdbcType=VARCHAR},
@@ -104,18 +104,24 @@
         GMT_MODIFIED = #{gmtModified,jdbcType=TIMESTAMP},
       </if>
     </set>
-    where ID = #{id,jdbcType=BIGINT}
+    where ID = #{id}
   </update>
   
   <delete id="deleteById" parameterType="java.lang.Long">
     delete from video
-    where ID = #{id,jdbcType=BIGINT}
+    where ID = #{id}
   </delete>
   
-  <select id="selectById" parameterType="java.lang.Long" resultMap="BaseResultMap">
+  <select id="selectById" parameterType="int" resultMap="BaseResultMap">
     select *
     from video
-    where ID = #{id,jdbcType=BIGINT}
+    where ID = #{id}
+  </select>
+  
+  <select id="selectByLimit" parameterType="int" resultMap="BaseResultMap">
+    select *
+    from video
+    limit ${start},${limit}
   </select>
   
   

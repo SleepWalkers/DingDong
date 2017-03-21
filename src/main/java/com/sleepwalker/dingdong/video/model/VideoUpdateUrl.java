@@ -1,6 +1,15 @@
 package com.sleepwalker.dingdong.video.model;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.commons.lang.StringUtils;
+import org.apache.http.NameValuePair;
+import org.apache.http.message.BasicNameValuePair;
+
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 
 public class VideoUpdateUrl {
     private long      id;
@@ -63,6 +72,25 @@ public class VideoUpdateUrl {
 
     public void setFromSiteId(int fromSiteId) {
         this.fromSiteId = fromSiteId;
+    }
+
+    public JSONObject getParamsObject() {
+        if (StringUtils.isBlank(getUpdateParams())) {
+            return null;
+        }
+        return JSON.parseObject(getUpdateParams());
+    }
+
+    public List<NameValuePair> getNameValuePair() {
+        if (StringUtils.isBlank(getUpdateParams())) {
+            return null;
+        }
+        JSONObject jsonObject = JSON.parseObject(getUpdateParams());
+        List<NameValuePair> nameValuePairs = new ArrayList<>();
+        for (String key : jsonObject.keySet()) {
+            nameValuePairs.add(new BasicNameValuePair(key, jsonObject.getString(key)));
+        }
+        return nameValuePairs;
     }
 
     public String getUpdateParams() {
