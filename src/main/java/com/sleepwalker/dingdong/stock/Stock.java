@@ -84,7 +84,7 @@ public class Stock {
     }
 
     private String formatNumber(double number) {
-        String numberStr = df.format(openPrice);
+        String numberStr = df.format(number);
 
         if (numberStr.startsWith("0")) {
             numberStr = " " + numberStr.substring(1);

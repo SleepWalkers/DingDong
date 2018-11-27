@@ -1,7 +1,7 @@
 package com.sleepwalker.dingdong.stock;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -11,7 +11,7 @@ import org.jsoup.nodes.Element;
 
 import com.sleepwalker.utils.HttpClientUtil;
 
-public class ThreeBunAnalyzer {
+public class StockInfoAnalyzer {
 
     private static final String  re1     = "（";                            // Any Single Character 1
 
@@ -24,7 +24,7 @@ public class ThreeBunAnalyzer {
 
     public static void main(String[] args) {
 
-        String url = "https://mp.weixin.qq.com/s/KPIAyYRmFjQERdwXofayOQ";
+        String url = "https://mp.weixin.qq.com/s/di1AW0sDyZwvvcKTEfErng";
 
         String result = HttpClientUtil.get(url, null);
         Document rootDoc = Jsoup.parse(result);
@@ -33,7 +33,7 @@ public class ThreeBunAnalyzer {
 
         Matcher m = PATTERN.matcher(element.text());
 
-        Set<String> symbols = new HashSet<>();
+        List<String> symbols = new ArrayList<>();
         while (m.find()) {
             String c1 = m.group(1);
             symbols.add(c1);

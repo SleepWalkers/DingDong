@@ -14,7 +14,7 @@ import com.sleepwalker.utils.HttpClientUtil;
 public class LiangYeeStockData {
 
     public static void main(String[] args) {
-        System.out.println(getStock("600805"));
+        System.out.println(getStock("000897"));
     }
 
     public static Stock getStock(String symbol) {
@@ -66,6 +66,9 @@ public class LiangYeeStockData {
     }
 
     private static String getToday() {
+
+        // return Timestamp.valueOf("2018-08-24 00:00:00").toString().substring(0, 10);
+
         return new Timestamp(System.currentTimeMillis()).toString().substring(0, 10);
     }
 
